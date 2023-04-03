@@ -1,0 +1,141 @@
+name: dockercompose10707182901641842725
+services:
+  redisdb:
+    command:
+    - redis-server
+    - /redis.conf
+    container_name: redisdb
+    image: redis
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 6379
+      published: "6379"
+      protocol: tcp
+    restart: always
+    volumes:
+    - type: bind
+      source: F:\AtisazBroker\ToDoApp\ToDoApp.API\Redis\Config\redis.conf
+      target: /redis.conf
+      bind:
+        create_host_path: true
+    - type: bind
+      source: F:\AtisazBroker\ToDoApp\ToDoApp.API\Redis\DB
+      target: /data
+      bind:
+        create_host_path: true
+  sqldb:
+    container_name: sqldb
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express
+      SA_PASSWORD: xyZW__33
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 1433
+      published: "1433"
+      protocol: tcp
+    restart: always
+  todoapi:
+    build:
+      context: F:\AtisazBroker\ToDoApp
+      dockerfile: ToDoApp.API/Dockerfile
+      labels:
+        com.microsoft.created-by: visual-studio
+        com.microsoft.visual-studio.project-name: ToDoApp.API
+      target: base
+    container_name: todoapp
+    depends_on:
+      redisdb:
+        condition: service_started
+      sqldb:
+        condition: service_started
+    entrypoint:
+    - tail
+    - -f
+    - /dev/null
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_HTTPS_PORT: "443"
+      ASPNETCORE_Kestrel__Certificates__Default__Password: pa55w0rd
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/todo.pfx
+      ASPNETCORE_LOGGING__CONSOLE__DISABLECOLORS: "true"
+      ASPNETCORE_URLS: https://+:443;http://+:80
+      ConnectionStrings:DB: Server=sqldb;Database=todoapp;User=sa;Password=xyZW__33;TrustServerCertificate=true
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      NUGET_FALLBACK_PACKAGES: ""
+      Redis:AbortOnConnectFail: "false"
+      Redis:Password: xyZW_*33
+      Redis:Port: "6379"
+      Redis:Server: redisdb
+    image: todo:dev
+    labels:
+      com.microsoft.visualstudio.debuggee.arguments: ' --additionalProbingPath /root/.nuget/packages  "/app/bin/Debug/net7.0/ToDoApp.API.dll"'
+      com.microsoft.visualstudio.debuggee.killprogram: /bin/sh -c "if PID=$$(pidof
+        dotnet); then kill $$PID; fi"
+      com.microsoft.visualstudio.debuggee.program: dotnet
+      com.microsoft.visualstudio.debuggee.workingdirectory: /app
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 80
+      published: "5012"
+      protocol: tcp
+    - mode: ingress
+      target: 443
+      published: "5013"
+      protocol: tcp
+    restart: always
+    tty: true
+    volumes:
+    - type: bind
+      source: F:\AtisazBroker\V3\ToDoApp\ToDoApp.API
+      target: /app
+      bind:
+        create_host_path: true
+    - type: bind
+      source: C:\Users\win11/.aspnet/https
+      target: /https
+      bind:
+        create_host_path: true
+    - type: bind
+      source: C:\Users\win11\vsdbg\vs2017u5
+      target: /remote_debugger
+      bind:
+        create_host_path: true
+    - type: bind
+      source: C:\Users\win11\AppData\Roaming/ASP.NET/Https
+      target: /root/.aspnet/https
+      read_only: true
+      bind:
+        create_host_path: true
+    - type: bind
+      source: C:\Users\win11\AppData\Roaming/Microsoft/UserSecrets
+      target: /root/.microsoft/usersecrets
+      read_only: true
+      bind:
+        create_host_path: true
+    - type: bind
+      source: C:\Users\win11\.nuget\packages\
+      target: /root/.nuget/packages
+      read_only: true
+      bind:
+        create_host_path: true
+    - type: bind
+      source: F:\AtisazBroker\V3\ToDoApp
+      target: /src
+      bind:
+        create_host_path: true
+    - type: bind
+      source: C:\Users\win11\AppData\Roaming/Microsoft/UserSecrets
+      target: /usersecrets
+      bind:
+        create_host_path: true
+networks:
+  default:
+    name: dockercompose10707182901641842725_default

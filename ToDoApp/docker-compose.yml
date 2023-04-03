@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+
+  redisdb:
+    image: redis
+
+  sqldb:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+  
+  todoapi:
+    image: todo
+    build:
+      context: .
+      dockerfile: ToDoApp.API/Dockerfile

@@ -1,0 +1,49 @@
+version: '3.4'
+
+services:
+
+  redisdb:
+    container_name: redisdb
+    restart: always
+    ports:
+        - "6379:6379"
+    command: ["redis-server", "/redis.conf"]
+    volumes:
+        - ./ToDoApp.API/Redis/Config/redis.conf:/redis.conf
+        - ./ToDoApp.API/Redis/DB:/data
+
+  sqldb:
+    container_name: sqldb
+    restart: always
+    ports:
+        - "1433:1433"
+    environment:
+        SA_PASSWORD: "xyZW__33"
+        ACCEPT_EULA: "Y"
+        MSSQL_PID: Express
+
+  todoapi:
+    container_name: todoapp
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=443
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/todo.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=pa55w0rd
+      - "Redis:Server=redisdb"
+      - "Redis:Port=6379"
+      - "Redis:Password=xyZW_*33"
+      - "Redis:AbortOnConnectFail=false"
+      - "ConnectionStrings:DB=Server=sqldb;Database=todoapp;User=sa;Password=xyZW__33;TrustServerCertificate=true"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/usersecrets
+      - ${USERPROFILE}/.aspnet/https:/https
+    depends_on:
+      - redisdb
+      - sqldb
+    ports:
+      - 5012:80
+      - 5013:443
+
+    

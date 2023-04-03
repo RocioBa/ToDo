@@ -1,0 +1,89 @@
+name: dockercompose13870266776527735656
+services:
+  redisdb:
+    command:
+    - redis-server
+    - /redis.conf
+    container_name: redisdb
+    image: redis
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 6379
+      published: "8002"
+      protocol: tcp
+    restart: always
+    volumes:
+    - type: bind
+      source: F:\AtisazBroker\V3\ToDoApp\ToDoApp.API\Redis\Config\redis.conf
+      target: /redis.conf
+      bind:
+        create_host_path: true
+    - type: bind
+      source: F:\AtisazBroker\V3\ToDoApp\ToDoApp.API\Redis\DB
+      target: /data
+      bind:
+        create_host_path: true
+  sqldb:
+    container_name: sqldb
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: xyZW__33
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 1433
+      published: "1433"
+      protocol: tcp
+    restart: always
+  todoapi:
+    build:
+      context: F:\AtisazBroker\V3\ToDoApp
+      dockerfile: ToDoApp.API/Dockerfile
+    container_name: todoapp
+    depends_on:
+      redisdb:
+        condition: service_started
+      sqldb:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_HTTPS_PORT: "443"
+      ASPNETCORE_Kestrel__Certificates__Default__Password: pa55w0rd
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/todo.pfx
+      ASPNETCORE_URLS: https://+:443;http://+:80
+      ConnectionStrings:DB: Server=sqldb;Database=todoapp;User=sa;Password=xyZW__33;TrustServerCertificate=true
+      Redis:AbortOnConnectFail: "false"
+      Redis:Password: xyZW_*33
+      Redis:Port: "8002"
+      Redis:Server: redisdb
+    image: todo
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 80
+      published: "5012"
+      protocol: tcp
+    - mode: ingress
+      target: 443
+      published: "5013"
+      protocol: tcp
+    restart: always
+    volumes:
+    - type: bind
+      source: C:\Users\win11\AppData\Roaming/Microsoft/UserSecrets
+      target: /usersecrets
+      bind:
+        create_host_path: true
+    - type: bind
+      source: C:\Users\win11/.aspnet/https
+      target: /https
+      bind:
+        create_host_path: true
+networks:
+  default:
+    name: dockercompose13870266776527735656_default
